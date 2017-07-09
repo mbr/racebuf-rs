@@ -20,7 +20,7 @@ use std::ptr;
 /// Guaranteed not to crash due to memory safety violations on get/set.
 ///
 /// Guarantees almost nothing else, especially that values stored or loaded
-/// are actually valid values for type `T
+/// are actually valid values for type `T`.
 pub struct RaceBuf<T>(Vec<T>);
 
 impl<T: Clone + Copy> RaceBuf<T> {
