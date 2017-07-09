@@ -32,16 +32,19 @@ impl<T: Clone + Copy> RaceBuf<T> {
     }
 
     /// Create a new buffer from existing vector
+    #[inline]
     pub fn from_vec(vec: Vec<T>) -> RaceBuf<T> {
         RaceBuf(vec)
     }
 
     /// Extra inner buffer from RaceBuf
+    #[inline]
     pub fn into_inner(self) -> Vec<T> {
         self.0
     }
 
     /// Get buffer length
+    #[inline]
     pub fn len(&self) -> usize {
         self.0.len()
     }
