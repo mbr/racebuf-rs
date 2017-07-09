@@ -12,7 +12,6 @@
 //! not an issue. Types that can be read in a single instruction, like small
 //! integers, will likely not suffer from these issues on some platforms.
 
-
 use std::ptr;
 
 /// Racy buffer
