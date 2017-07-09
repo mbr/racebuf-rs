@@ -31,6 +31,12 @@ impl<T: Clone + Copy> RaceBuf<T> {
         RaceBuf(v)
     }
 
+    /// Return a pointer to the first element in the buffer
+    #[inline]
+    pub fn as_ptr(&self) -> *const RaceBuf<T> {
+        self.0.as_ptr() as *const RaceBuf<T>
+    }
+
     /// Create a new buffer from existing vector
     #[inline]
     pub fn from_vec(vec: Vec<T>) -> RaceBuf<T> {
