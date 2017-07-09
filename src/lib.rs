@@ -32,6 +32,21 @@ impl<T: Clone + Copy> RaceBuf<T> {
         RaceBuf(v)
     }
 
+    /// Create a new buffer from existing vector
+    pub fn from_vec(vec: Vec<T>) -> RaceBuf<T> {
+        RaceBuf(vec)
+    }
+
+    /// Extra inner buffer from RaceBuf
+    pub fn into_inner(self) -> Vec<T> {
+        self.0
+    }
+
+    /// Get buffer length
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
     /// Retrieve value stored at index
     ///
     /// Will return `None` if the index is out-of-bounds.
