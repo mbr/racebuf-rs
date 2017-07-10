@@ -20,18 +20,21 @@ use std::ptr;
 ///
 /// Guarantees almost nothing else, especially that values stored or loaded
 /// are actually valid values for type `T`.
-pub struct RaceBuf<T>(Vec<T>);
+pub struct RaceBuf<T>(std::cell::UnsafeCell<Vec<T>>);
+
+unsafe impl<T> Sync for RaceBuf<T> {}
+unsafe impl<T> Send for RaceBuf<T> {}
 
 impl<T: Clone + Copy> RaceBuf<T> {
     /// Create a new buffer, initialized with `value`.
     #[inline]
     pub fn new_with_value(size: usize, value: T) -> RaceBuf<T> {
-        let mut v = Vec::with_capacity(size);
-        v.resize(size, value);
-        RaceBuf(v)
+        RaceBuf(vec![value; size])
     }
 
     /// Return a pointer to the first element in the buffer
+    ///
+    /// Warning: Do not dereference the resulting pointer ever, it's completely bogus
     #[inline]
     pub fn as_ptr(&self) -> *const RaceBuf<T> {
         self.0.as_ptr() as *const RaceBuf<T>
@@ -59,26 +62,22 @@ impl<T: Clone + Copy> RaceBuf<T> {
     ///
     /// Will return `None` if the index is out-of-bounds.
     #[inline(always)]
-    pub fn get(&self, idx: usize) -> Option<T> {
-        if idx >= self.0.len() {
-            None
-        } else {
-            Some(unsafe { self.get_unchecked(idx) })
-        }
+    pub fn read(&self, idx: usize) -> Option<T> {
+        self.0.get(idx).map(|ref_t| unsafe { ptr::read_volatile(ref_t) } )
     }
 
     /// Retrieve value stored at index without bounds checking
     #[inline(always)]
-    pub unsafe fn get_unchecked(&self, idx: usize) -> T {
+    pub unsafe fn read_unchecked(&self, idx: usize) -> T {
         // unsafe: bounds are not checked, pointer deref
-        ptr::read_volatile(self.0.as_ptr().offset(idx as isize))
+        ptr::read_volatile(self.0.get_unchecked(idx))
     }
 
     /// Set value at index
     ///
     /// If `idx` is out-of-bounds, `set` will have no effect.
     #[inline(always)]
-    pub fn set(&self, idx: usize, value: T) {
+    pub fn set(&mut self, idx: usize, value: T) {
         if idx >= self.0.len() {
             return;
         } else {
@@ -91,9 +90,9 @@ impl<T: Clone + Copy> RaceBuf<T> {
     /// Will definately cause undefined behaviour if `idx` is not within
     /// bounds.
     #[inline(always)]
-    pub unsafe fn set_unchecked(&self, idx: usize, value: T) {
-        // unsafe: bounds are not checked, pointer deref, *const T to *mut T
-        ptr::write_volatile(self.0.as_ptr().offset(idx as isize) as *mut T, value)
+    pub unsafe fn set_unchecked(&mut self, idx: usize, value: T) {
+        // unsafe: bounds are not checked, pointer deref
+        ptr::write_volatile(self.0.get_unchecked_mut(idx), value)
     }
 }
 
